@@ -1,174 +1,169 @@
 package org.example.app.components.sections
 
-import androidx.compose.runtime.*
-import com.varabyte.kobweb.browser.dom.ElementTarget
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.varabyte.kobweb.compose.css.FontWeight
 import com.varabyte.kobweb.compose.css.functions.clamp
-import com.varabyte.kobweb.compose.foundation.layout.Column
+import com.varabyte.kobweb.compose.foundation.layout.Arrangement
+import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Row
-import com.varabyte.kobweb.compose.foundation.layout.Spacer
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
-import com.varabyte.kobweb.compose.ui.graphics.Colors
+import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.modifiers.*
-import com.varabyte.kobweb.silk.components.graphics.Image
-import com.varabyte.kobweb.silk.components.icons.CloseIcon
-import com.varabyte.kobweb.silk.components.icons.HamburgerIcon
-import com.varabyte.kobweb.silk.components.icons.MoonIcon
-import com.varabyte.kobweb.silk.components.icons.SunIcon
+import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.silk.components.navigation.Link
 import com.varabyte.kobweb.silk.components.navigation.UncoloredLinkVariant
 import com.varabyte.kobweb.silk.components.navigation.UndecoratedLinkVariant
-import com.varabyte.kobweb.silk.components.overlay.Overlay
-import com.varabyte.kobweb.silk.components.overlay.OverlayVars
-import com.varabyte.kobweb.silk.components.overlay.PopupPlacement
-import com.varabyte.kobweb.silk.components.overlay.Tooltip
 import com.varabyte.kobweb.silk.style.CssStyle
-import com.varabyte.kobweb.silk.style.animation.Keyframes
-import com.varabyte.kobweb.silk.style.animation.toAnimation
 import com.varabyte.kobweb.silk.style.base
-import com.varabyte.kobweb.silk.style.breakpoint.Breakpoint
-import com.varabyte.kobweb.silk.style.breakpoint.displayIfAtLeast
-import com.varabyte.kobweb.silk.style.breakpoint.displayUntil
 import com.varabyte.kobweb.silk.style.toModifier
-import com.varabyte.kobweb.silk.theme.colors.ColorMode
+import kotlinx.browser.document
+import kotlinx.browser.window
 import org.jetbrains.compose.web.css.*
-import org.example.app.components.widgets.IconButton
-import org.example.app.toSitePalette
+import org.jetbrains.compose.web.attributes.href
+import org.jetbrains.compose.web.dom.A
+import org.jetbrains.compose.web.dom.Img
+import org.w3c.dom.events.Event
 
 val NavHeaderStyle = CssStyle.base {
-    Modifier.fillMaxWidth().padding(1.cssRem)
+    Modifier
+        .position(Position.Sticky)
+        .top(0.px)
+        .zIndex(10)
+        .fillMaxWidth()
+        .fontSize(0.95.cssRem)
+}
+
+val NavLinkStyle = CssStyle.base {
+    Modifier
+        .letterSpacing(0.14.cssRem)
+        .fontWeight(FontWeight.Medium)
+        .color(Color.rgb(0xEDEDED))
+}
+
+private fun smoothScrollTo(id: String) {
+    val target = document.getElementById(id) ?: return
+    target.asDynamic().scrollIntoView(js("({ behavior: 'smooth', block: 'start' })"))
+    window.location.hash = id
 }
 
 @Composable
-private fun NavLink(path: String, text: String) {
-    Link(path, text, variant = UndecoratedLinkVariant.then(UncoloredLinkVariant))
-}
-
-@Composable
-private fun MenuItems() {
-    NavLink("/", "Home")
-    NavLink("/about", "About")
-}
-
-@Composable
-private fun ColorModeButton() {
-    var colorMode by ColorMode.currentState
-    IconButton(onClick = { colorMode = colorMode.opposite },) {
-        if (colorMode.isLight) MoonIcon() else SunIcon()
-    }
-    Tooltip(ElementTarget.PreviousSibling, "Toggle color mode", placement = PopupPlacement.BottomRight)
-}
-
-@Composable
-private fun HamburgerButton(onClick: () -> Unit) {
-    IconButton(onClick) {
-        HamburgerIcon()
-    }
-}
-
-@Composable
-private fun CloseButton(onClick: () -> Unit) {
-    IconButton(onClick) {
-        CloseIcon()
-    }
-}
-
-val SideMenuSlideInAnim = Keyframes {
-    from {
-        Modifier.translateX(100.percent)
-    }
-
-    to {
-        Modifier
-    }
-}
-
-// Note: When the user closes the side menu, we don't immediately stop rendering it (at which point it would disappear
-// abruptly). Instead, we start animating it out and only stop rendering it when the animation is complete.
-enum class SideMenuState {
-    CLOSED,
-    OPEN,
-    CLOSING;
-
-    fun close() = when (this) {
-        CLOSED -> CLOSED
-        OPEN -> CLOSING
-        CLOSING -> CLOSING
-    }
+private fun NavLink(id: String, text: String) {
+    Link(
+        "#$id",
+        text,
+        modifier = NavLinkStyle.toModifier().onClick {
+            it.preventDefault()
+            smoothScrollTo(id)
+        },
+        variant = UndecoratedLinkVariant.then(UncoloredLinkVariant)
+    )
 }
 
 @Composable
 fun NavHeader() {
-    Row(NavHeaderStyle.toModifier(), verticalAlignment = Alignment.CenterVertically) {
-        Link("https://kobweb.varabyte.com") {
-            // Block display overrides inline display of the <img> tag, so it calculates centering better
-            Image("/kobweb-logo.png", "Kobweb Logo", Modifier.height(2.cssRem).display(DisplayStyle.Block))
+    var isScrolled by remember { mutableStateOf(false) }
+    DisposableEffect(Unit) {
+        val listener: (Event) -> Unit = {
+            isScrolled = window.scrollY > 60.0
+        }
+        isScrolled = window.scrollY > 60.0
+        window.addEventListener("scroll", listener)
+        onDispose { window.removeEventListener("scroll", listener) }
+    }
+
+    val stateModifier = if (isScrolled) {
+        Modifier
+            .width(clamp(70.percent, 92.vw, 88.percent))
+            .alignSelf(AlignSelf.Center)
+            .top(0.9.cssRem)
+            .padding(
+                leftRight = clamp(2.1.cssRem, 5.vw, 3.8.cssRem),
+                topBottom = clamp(0.75.cssRem, 2.vw, 1.1.cssRem)
+            )
+            .borderRadius(2.6.cssRem)
+            .backgroundColor(Color.rgba(12, 12, 12, 0.75f))
+            .boxShadow(offsetX = 0.px, offsetY = 12.px, blurRadius = 32.px, color = Color.rgba(0, 0, 0, 0.45f))
+            .border(1.px, LineStyle.Solid, Color.rgba(255, 255, 255, 0.08f))
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .top(0.px)
+            .padding(
+                leftRight = clamp(2.6.cssRem, 7.vw, 5.2.cssRem),
+                topBottom = clamp(1.4.cssRem, 3.vw, 1.9.cssRem)
+            )
+            .borderRadius(1.4.cssRem)
+            .backgroundColor(Color.rgb(0x0B0B0B))
+            .borderBottom(1.px, LineStyle.Solid, Color.rgb(0x1F1F1F))
+    }
+
+    Row(
+        NavHeaderStyle.toModifier()
+            .then(stateModifier)
+            .transition {
+                property("all")
+                duration(260.ms)
+                timingFunction(AnimationTimingFunction.Ease)
+            }
+            .gap(clamp(4.2.cssRem, 9.vw, 8.6.cssRem)),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            Modifier.gap(clamp(3.4.cssRem, 7.8.vw, 6.6.cssRem)).flex(1).justifyContent(JustifyContent.FlexEnd),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            NavLink("about-us", "About Us")
+            NavLink("services", "Services")
+            NavLink("gallery", "Gallery")
         }
 
-        Spacer()
-
-        Row(Modifier.gap(1.5.cssRem).displayIfAtLeast(Breakpoint.MD), verticalAlignment = Alignment.CenterVertically) {
-            MenuItems()
-            ColorModeButton()
+        Box(Modifier.padding(leftRight = clamp(0.8.cssRem, 2.5.vw, 1.6.cssRem)), contentAlignment = Alignment.Center) {
+            Img(
+                src = "/main%20logo.svg",
+                alt = "Peaky Blades logo",
+                attrs = Modifier.height(clamp(2.8.cssRem, 4.5.vw, 3.8.cssRem)).toAttrs()
+            )
         }
 
         Row(
-            Modifier
-                .fontSize(1.5.cssRem)
-                .gap(1.cssRem)
-                .displayUntil(Breakpoint.MD),
+            Modifier.gap(clamp(3.4.cssRem, 7.8.vw, 6.6.cssRem)).flex(1).justifyContent(JustifyContent.FlexStart),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            var menuState by remember { mutableStateOf(SideMenuState.CLOSED) }
-
-            ColorModeButton()
-            HamburgerButton(onClick =  { menuState = SideMenuState.OPEN })
-
-            if (menuState != SideMenuState.CLOSED) {
-                SideMenu(
-                    menuState,
-                    close = { menuState = menuState.close() },
-                    onAnimationEnd = { if (menuState == SideMenuState.CLOSING) menuState = SideMenuState.CLOSED }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SideMenu(menuState: SideMenuState, close: () -> Unit, onAnimationEnd: () -> Unit) {
-    Overlay(
-        Modifier
-            .setVariable(OverlayVars.BackgroundColor, Colors.Transparent)
-            .onClick { close() }
-    ) {
-        key(menuState) { // Force recompute animation parameters when close button is clicked
-            Column(
-                Modifier
-                    .fillMaxHeight()
-                    .width(clamp(8.cssRem, 33.percent, 10.cssRem))
-                    .align(Alignment.CenterEnd)
-                    // Close button will appear roughly over the hamburger button, so the user can close
-                    // things without moving their finger / cursor much.
-                    .padding(top = 1.cssRem, leftRight = 1.cssRem)
-                    .gap(1.5.cssRem)
-                    .backgroundColor(ColorMode.current.toSitePalette().nearBackground)
-                    .animation(
-                        SideMenuSlideInAnim.toAnimation(
-                            duration = 200.ms,
-                            timingFunction = if (menuState == SideMenuState.OPEN) AnimationTimingFunction.EaseOut else AnimationTimingFunction.EaseIn,
-                            direction = if (menuState == SideMenuState.OPEN) AnimationDirection.Normal else AnimationDirection.Reverse,
-                            fillMode = AnimationFillMode.Forwards
-                        )
+            NavLink("footer", "Contact")
+            Link(
+                "/book",
+                "Book Now",
+                modifier = NavLinkStyle.toModifier(),
+                variant = UndecoratedLinkVariant.then(UncoloredLinkVariant)
+            )
+            Row(Modifier.gap(0.7.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                A(attrs = Modifier.display(DisplayStyle.Flex).alignItems(AlignItems.Center).toAttrs { href("#") }) {
+                    Img(
+                        src = "/instagram%20logo.svg",
+                        alt = "Instagram",
+                        attrs = Modifier.height(1.5.cssRem).width(1.5.cssRem).toAttrs()
                     )
-                    .borderRadius(topLeft = 2.cssRem)
-                    .onClick { it.stopPropagation() }
-                    .onAnimationEnd { onAnimationEnd() },
-                horizontalAlignment = Alignment.End
-            ) {
-                CloseButton(onClick = { close() })
-                Column(Modifier.padding(right = 0.75.cssRem).gap(1.5.cssRem).fontSize(1.4.cssRem), horizontalAlignment = Alignment.End) {
-                    MenuItems()
+                }
+                A(attrs = Modifier.display(DisplayStyle.Flex).alignItems(AlignItems.Center).toAttrs { href("#") }) {
+                    Img(
+                        src = "/whatsapp%20logo.svg",
+                        alt = "WhatsApp",
+                        attrs = Modifier.height(1.5.cssRem).width(1.5.cssRem).toAttrs()
+                    )
+                }
+                A(attrs = Modifier.display(DisplayStyle.Flex).alignItems(AlignItems.Center).toAttrs { href("#") }) {
+                    Img(
+                        src = "/tiktok%20logo.svg",
+                        alt = "TikTok",
+                        attrs = Modifier.height(1.5.cssRem).width(1.5.cssRem).toAttrs()
+                    )
                 }
             }
         }
