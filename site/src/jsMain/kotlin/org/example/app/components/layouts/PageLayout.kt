@@ -18,15 +18,15 @@ import com.varabyte.kobweb.silk.style.breakpoint.Breakpoint
 import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import com.varabyte.kobweb.compose.ui.graphics.Color
+import com.varabyte.kobweb.compose.ui.graphics.Colors
 import kotlinx.browser.document
-import org.jetbrains.compose.web.css.cssRem
-import org.jetbrains.compose.web.css.fr
-import org.jetbrains.compose.web.css.percent
+import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.Div
-import org.jetbrains.compose.web.css.vh
 import org.example.app.components.sections.Footer
 import org.example.app.components.sections.NavHeader
 import org.example.app.toSitePalette
+import org.w3c.dom.HTMLLinkElement
+import org.w3c.dom.HTMLMetaElement
 
 val PageContentStyle = CssStyle {
     base { Modifier.fillMaxSize().padding(leftRight = 3.cssRem, top = 2.cssRem, bottom = 4.cssRem) }
@@ -77,12 +77,77 @@ class PageLayoutData(
     val wideContent: Boolean = false,
 )
 
+private fun setMetaByName(name: String, content: String) {
+    val head = document.head ?: return
+    val existing = head.querySelector("meta[name='$name']") as? HTMLMetaElement
+    if (existing != null) {
+        existing.content = content
+        return
+    }
+    val meta = document.createElement("meta") as HTMLMetaElement
+    meta.name = name
+    meta.content = content
+    head.appendChild(meta)
+}
+
+private fun setMetaByProperty(property: String, content: String) {
+    val head = document.head ?: return
+    val existing = head.querySelector("meta[property='$property']") as? HTMLMetaElement
+    if (existing != null) {
+        existing.content = content
+        return
+    }
+    val meta = document.createElement("meta") as HTMLMetaElement
+    meta.setAttribute("property", property)
+    meta.content = content
+    head.appendChild(meta)
+}
+
+private fun setLink(rel: String, href: String, sizes: String? = null, type: String? = null) {
+    val head = document.head ?: return
+    val selector = if (sizes != null) "link[rel='$rel'][sizes='$sizes']" else "link[rel='$rel']"
+    val existing = head.querySelector(selector) as? HTMLLinkElement
+    if (existing != null) {
+        existing.href = href
+        if (sizes != null) existing.setAttribute("sizes", sizes)
+        if (type != null) existing.type = type
+        return
+    }
+    val link = document.createElement("link") as HTMLLinkElement
+    link.rel = rel
+    link.href = href
+    if (sizes != null) link.setAttribute("sizes", sizes)
+    if (type != null) link.type = type
+    head.appendChild(link)
+}
+
 @Composable
 @Layout
 fun PageLayout(ctx: PageContext, content: @Composable ColumnScope.() -> Unit) {
     val data = ctx.data.getValue<PageLayoutData>()
     LaunchedEffect(data.title) {
-        document.title = "Northside Barbers - ${data.title}"
+        val seoTitle = "AEROVA ELITE - ${data.title}"
+        val seoDescription =
+            "Aerova Elite is a luxury chauffeur service providing premium private transportation across London and the United Kingdom. We specialize in executive travel, airport transfers, and luxury chauffeur-driven vehicles designed for comfort, reliability, and professionalism."
+        document.title = seoTitle
+        setMetaByName("description", seoDescription)
+        setMetaByName(
+            "keywords",
+            "Aerova Elite, luxury chauffeur service, London chauffeur, UK chauffeur, executive travel, airport transfers, private transportation, chauffeur-driven vehicles, Heathrow transfers, Gatwick transfers, corporate travel, premium transport"
+        )
+        setMetaByProperty("og:title", seoTitle)
+        setMetaByProperty("og:description", seoDescription)
+        setMetaByProperty("og:type", "website")
+        setMetaByProperty("og:site_name", "AEROVA ELITE")
+        setMetaByName("twitter:card", "summary_large_image")
+        setMetaByName("twitter:title", seoTitle)
+        setMetaByName("twitter:description", seoDescription)
+        setLink("icon", "/favicon/favicon.ico")
+        setLink("icon", "/favicon/favicon.svg", type = "image/svg+xml")
+        setLink("apple-touch-icon", "/favicon/apple-touch-icon.png", sizes = "180x180")
+        setLink("icon", "/favicon/favicon-96x96.png", sizes = "96x96")
+        setLink("icon", "/favicon/web-app-manifest-192x192.png", sizes = "192x192")
+        setLink("icon", "/favicon/web-app-manifest-512x512.png", sizes = "512x512")
     }
 
     val contentStyle = if (data.wideContent) PageContentWideStyle else PageContentStyle
@@ -96,7 +161,7 @@ fun PageLayout(ctx: PageContext, content: @Composable ColumnScope.() -> Unit) {
         Modifier
             .fillMaxWidth()
             .minHeight(100.vh)
-            .backgroundColor(Color.rgb(0x090909))
+            .backgroundColor(Color.rgb(0x000000))
             // Create a box with two rows: the main content (fills as much space as it can) and the footer (which reserves
             // space at the bottom). "min-content" means the use the height of the row, which we use for the footer.
             // Since this box is set to *at least* 100%, the footer will always appear at least on the bottom but can be
@@ -106,13 +171,26 @@ fun PageLayout(ctx: PageContext, content: @Composable ColumnScope.() -> Unit) {
             .then(gridModifier),
         contentAlignment = Alignment.Center
     ) {
+        Div(
+            Modifier.fillMaxSize().position(Position.Absolute).top(0.px).left(0.px).toAttrs {
+                style {
+                    property(
+                        "background",
+                        "url('/website%20background.png')"
+                    )
+                    property("background-size", "60% auto")
+                    property("background-position", "center")
+                    property("background-repeat", "no-repeat")
+                }
+            }
+        )
         Column(
             // Isolate the content, because otherwise the absolute-positioned SVG above will render on top of it.
             // This is confusing but how browsers work. Read up on stacking contexts for more info.
             // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_positioned_layout/Understanding_z-index/Stacking_context
             // Some people might have used z-index instead, but best practice is to avoid that if possible, because
             // as a site gets complex, Z-fighting can be a huge pain to track down.
-            Modifier.fillMaxSize().gridRow(1).color(Color.rgb(0xF5F5F5)),
+            Modifier.fillMaxSize().gridRow(1).color(Colors.White).zIndex(1),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             NavHeader()

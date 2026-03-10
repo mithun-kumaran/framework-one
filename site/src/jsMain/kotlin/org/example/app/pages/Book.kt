@@ -584,7 +584,7 @@ fun BookPage() {
     Div(BookingPageStyle.toModifier().toAttrs()) {
         Column(Modifier.fillMaxWidth().gap(2.cssRem)) {
             Row(BookingHeaderStyle.toModifier()) {
-                Div(BookingBrandPillStyle.toAttrs()) { Text("PEAKY BLADES") }
+                Div(BookingBrandPillStyle.toAttrs()) { Text("AEROVA ELITE") }
                 Row(BookingStepsRowStyle.toModifier(), verticalAlignment = Alignment.CenterVertically) {
                     val steps = listOf("Location", "Professional", "Service", "Time", "Confirm", "Done")
                     steps.forEachIndexed { index, label ->
@@ -607,18 +607,18 @@ fun BookPage() {
                 BookingStep.Entry -> {
                     Div(BookingEntryGridStyle.toAttrs()) {
                         Column(Modifier.gap(1.2.cssRem)) {
-                            P(BookingTitleStyle.toAttrs()) { Text("Your personal barber service any time") }
+                            P(BookingTitleStyle.toAttrs()) { Text("Your private chauffeur service, any time") }
                             P(BookingSubtitleStyle.toAttrs()) {
-                                Text("Book a visit with our team in seconds. Choose your location, professional, and time that works best for you.")
+                                Text("Book a ride with our team in seconds. Choose your pickup, chauffeur, and time that works best for you.")
                             }
-                            P(BookingSubtitleStyle.toModifier().margin(bottom = 0.px).toAttrs()) { Text("2 locations") }
+                            P(BookingSubtitleStyle.toModifier().margin(bottom = 0.px).toAttrs()) { Text("London wide coverage") }
                             Button(onClick = { step = BookingStep.Location }, modifier = BookingPrimaryButtonStyle.toModifier()) {
                                 Text("BOOK NOW")
                             }
                         }
                         Img(
                             src = "/barbershop%20pic.jpg",
-                            alt = "Barbershop",
+                            alt = "Chauffeur service",
                             attrs = BookingEntryImageStyle.toModifier().toAttrs {
                                 style { property("object-fit", "cover") }
                             }
@@ -633,7 +633,7 @@ fun BookPage() {
                                 Button(
                                     onClick = {
                                         val base = selectedLocation?.let { "${it.name}, ${it.city}" } ?: "Chinatown NYC"
-                                        mapQuery = "Barbershop near $base"
+                                        mapQuery = "Chauffeur service near $base"
                                         mapSearchText = base
                                     },
                                     modifier = BookingMapButtonStyle.toModifier()

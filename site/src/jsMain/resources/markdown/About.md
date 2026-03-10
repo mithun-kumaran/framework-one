@@ -3,19 +3,21 @@ layout: .components.layouts.MarkdownLayout
 title: About
 ---
 
-# About Northside Barbers
+# About Aerova Elite
 
-Northside Barbers is a modern barbershop focused on precision cuts, clean fades, and classic grooming. We keep the
-experience simple: great service, consistent results, and easy booking.
+Aerova Elite is a premium chauffeur service built around comfort, punctuality, and professionalism. We provide refined private travel with experienced drivers, luxury vehicles, and a smooth booking experience from start to finish.
 
 ## What to expect
 
-- Clean, minimal studio with premium tools
-- Skilled barbers who listen and deliver
-- Walk-ins welcome with same-day availability
+- Professional chauffeurs with a polished, reliable service
+- Luxury vehicles designed for comfort and style
+- Airport transfers, private rides, and executive travel
+- Simple booking with a seamless customer experience
+
+## Our mission
+
+Our mission is to deliver precision travel for modern passengers who value reliability, discretion, and first-class comfort.
 
 ## Location
 
-214 Market Street, Suite 3  
-Springfield, MA  
-Near Central Station
+Based in London, serving the UK.
